@@ -61,5 +61,27 @@ export async function getRecipesByUserId(uid) {
     return rows
 }
 
+export async function createRecipe(name, description, type, cookingtime, ingredients, instructions, userId) {
+    const [result] = await pool.query(
+        "INSERT INTO recipes (name, description, type, Cookingtime, ingredients, instructions, uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [name, description, type, cookingtime, ingredients, instructions, userId]
+    );
+    const id = result.insertId;
+    return getRecipebyID(id);
+}
+
+export async function deleteRecipe(id) {
+    await pool.query("DELETE FROM recipes WHERE rid = ?", [id]);
+    return true;
+}
+
+export async function updateRecipe(id, name, description, type, cookingtime, ingredients, instructions) {
+    await pool.query(
+        "UPDATE recipes SET name = ?, description = ?, type = ?, Cookingtime = ?, ingredients = ?, instructions = ? WHERE rid = ?",
+        [name, description, type, cookingtime, ingredients, instructions, id]
+    );
+    return getRecipebyID(id);
+}
+
 const users = await getUsers()
 console.log(users)

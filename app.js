@@ -2,7 +2,9 @@ import express from 'express'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import session from 'express-session'
-import {getUserById, createUser, getUsers, verifyUser, getRecipebyID, getRecipesByUserId} from './db.js'
+import {getUserById, createUser, getUsers, verifyUser,
+     getRecipebyID, getRecipesByUserId, createRecipe, 
+     updateRecipe, deleteRecipe} from './db.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -168,5 +170,150 @@ app.get('/user-recipes', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('Error fetching recipes:', error);
         res.status(500).json({ error: 'Failed to fetch recipes' });
+    }
+});
+
+// Route to serve the new recipe form 
+app.get('/new-recipe', requireAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'new_recipe.html'));
+});
+
+// Route to handle recipe creation
+app.post('/recipes', requireAuth, async (req, res) => {
+    try {
+        const { name, description, type, cookingtime, ingredients, instructions } = req.body;
+        const userId = req.session.user.uid;
+        
+        // Basic server-side validation
+        if (!name || !description || !type || !cookingtime || !ingredients || !instructions) {
+            return res.redirect('/new-recipe?message=All fields are required&error=true');
+        }
+        
+        // Use the createRecipe function from db.js instead of direct pool access
+        const recipe = await createRecipe(name, description, type, cookingtime, ingredients, instructions, userId);
+        
+        res.redirect('/dashboard?message=Recipe added successfully');
+    } catch (error) {
+        console.error('Error creating recipe:', error);
+        res.redirect('/new-recipe?message=Failed to create recipe: ' + error.message + '&error=true');
+    }
+});
+
+// Route to delete a recipe 8)
+app.delete('/recipes/:id', requireAuth, async (req, res) => {
+    try {
+        const recipeId = req.params.id;
+        const userId = req.session.user.uid;
+        
+        // check if the recipe belongs to the  :)
+        const recipe = await getRecipebyID(recipeId);
+        
+        if (!recipe) {
+            return res.status(404).json({ error: 'Recipe not found' });
+        }
+        
+        if (recipe.uid !== userId) {
+            return res.status(403).json({ error: 'You do not have permission to delete this recipe' });
+        }
+        
+        // delete the recipe
+        await deleteRecipe(recipeId);
+        
+        res.status(200).json({ message: 'Recipe deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting recipe:', error);
+        res.status(500).json({ error: 'Failed to delete recipe' });
+    }
+});
+
+// Routethe edit recipe page :O
+app.get('/edit-recipe/:id', requireAuth, async (req, res) => {
+    try {
+        const recipeId = req.params.id;
+        const userId = req.session.user.uid;
+        
+        // Check if the recipe exists and belongs to the user
+        const recipe = await getRecipebyID(recipeId);
+        
+        if (!recipe) {
+            return res.redirect('/dashboard?message=Recipe not found&error=true');
+        }
+        
+        if (recipe.uid !== userId) {
+            return res.redirect('/dashboard?message=You do not have permission to edit this recipe&error=true');
+        }
+        
+        // Store the recipe in the session for the edit form
+        req.session.editRecipe = recipe;
+        
+        res.sendFile(path.join(__dirname, 'public', 'edit_recipe.html'));
+    } catch (error) {
+        console.error('Error loading edit page:', error);
+        res.redirect('/dashboard?message=Failed to load edit page: ' + error.message + '&error=true');
+    }
+});
+
+// Route to get recipe data for editing
+app.get('/edit-recipe-data/:id', requireAuth, async (req, res) => {
+    try {
+        // Return the recipe stored in the session
+        if (req.session.editRecipe && req.session.editRecipe.rid == req.params.id) {
+            return res.json(req.session.editRecipe);
+        }
+        
+        const recipeId = req.params.id;
+        const userId = req.session.user.uid;
+        
+        // Check if the recipe exists and belongs to the user
+        const recipe = await getRecipebyID(recipeId);
+        
+        if (!recipe) {
+            return res.status(404).json({ error: 'Recipe not found' });
+        }
+        
+        if (recipe.uid !== userId) {
+            return res.status(403).json({ error: 'You do not have permission to edit this recipe' });
+        }
+        
+        res.json(recipe);
+    } catch (error) {
+        console.error('Error fetching recipe data:', error);
+        res.status(500).json({ error: 'Failed to fetch recipe data' });
+    }
+});
+
+// Route to update a recipe
+app.post('/recipes/:id', requireAuth, async (req, res) => {
+    try {
+        const recipeId = req.params.id;
+        const userId = req.session.user.uid;
+        const { name, description, type, cookingtime, ingredients, instructions } = req.body;
+        
+        // Basic server-side validation
+        if (!name || !description || !type || !cookingtime || !ingredients || !instructions) {
+            return res.redirect(`/edit-recipe/${recipeId}?message=All fields are required&error=true`);
+        }
+        
+        // Check if the recipe exists and belongs to the user
+        const recipe = await getRecipebyID(recipeId);
+        
+        if (!recipe) {
+            return res.redirect('/dashboard?message=Recipe not found&error=true');
+        }
+        
+        if (recipe.uid !== userId) {
+            return res.redirect('/dashboard?message=You do not have permission to edit this recipe&error=true');
+        }
+        
+        // Update the recipe
+        await updateRecipe(recipeId, name, description, type, cookingtime, ingredients, instructions);
+        
+        // Clear the session data
+        delete req.session.editRecipe;
+        
+        res.redirect('/dashboard?message=Recipe updated successfully');
+    } catch (error) {
+        console.error('Error updating recipe:', error);
+        res.redirect(`/edit-recipe/${req.params.id}?message=Failed to update recipe: ${error.message}&error=true`);
     }
 });

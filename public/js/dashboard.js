@@ -7,69 +7,78 @@ fetch('/dashboard-data')
         return response.json();
     })
     .then(data => {
-        document.getElementById('user-info').innerHTML = `
-            <p><strong>Username:</strong> ${data.username}</p>
-            <p><strong>Email:</strong> ${data.email}</p>
-        `;
+        // Update the welcome message with the username
+        document.getElementById('username-display').textContent = data.username;
         
-        // After getting user data, fetch their recipes
-        return fetch('/user-recipes');
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Failed to fetch recipes');
-        }
-        return response.json();
-    })
-    .then(recipes => {
-        const recipesContainer = document.getElementById('recipes-container');
-        
-        if (recipes.length === 0) {
-            recipesContainer.innerHTML = '<p class="no-recipes">You don\'t have any recipes yet.</p>';
-            return;
-        }
-        
-        // Create recipe cards
-        let cardsHTML = '<div class="recipe-container">';
-        
-        recipes.forEach(recipe => {
-            cardsHTML += `
-                <div class="recipe-card">
-                    <h3 class="recipe-name">${recipe.name}</h3>
-                    ${recipe.image ? 
-                        `<img src="${recipe.image}" class="recipe-image" alt="${recipe.name}">` : 
-                        `<div class="recipe-image" style="background-color: #ddd; display: flex; align-items: center; justify-content: center;">No Image</div>`
-                    }
-                    <div class="recipe-details">
-                        <p class="recipe-description">${recipe.description}</p>
-                        <div class="recipe-meta">
-                            <span class="recipe-type">${recipe.type}</span>
-                            <span class="recipe-time">Cooking time: ${recipe.Cookingtime} min</span>
-                        </div>
-                        
-                        <div class="recipe-section">
-                            <h4>Ingredients</h4>
-                            <p>${recipe.ingredients}</p>
-                        </div>
-                        
-                        <div class="recipe-section">
-                            <h4>Instructions</h4>
-                            <p>${recipe.instructions}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        cardsHTML += '</div>';
-        recipesContainer.innerHTML = cardsHTML;
+        // Load recipes and other dashboard content
+        loadUserRecipes();
     })
     .catch(error => {
         console.error('Error:', error);
-        if (error.message === 'Not authenticated') {
-            window.location.href = '/login';
-        } else {
-            document.getElementById('recipes-container').innerHTML = 
-                `<p>Error loading recipes: ${error.message}</p>`;
-        }
+        window.location.href = '/login';
     });
+
+// Function to load user recipes
+function loadUserRecipes() {
+    fetch('/user-recipes')
+        .then(response => response.json())
+        .then(recipes => {
+            const recipesContainer = document.getElementById('recipes-container');
+            
+            if (recipes.length === 0) {
+                recipesContainer.innerHTML = '<p>You haven\'t added any recipes yet.</p>';
+                return;
+            }
+            
+            let recipesHTML = '<div class="recipes-grid">';
+            recipes.forEach(recipe => {
+                recipesHTML += `
+                    <div class="recipe-card">
+                        <h3>${recipe.name}</h3>
+                        <p>${recipe.description}</p>
+                        <p><strong>Type:</strong> ${recipe.type}</p>
+                        <p><strong>Cooking Time:</strong> ${recipe.Cookingtime} minutes</p>
+                        <div class="recipe-actions">
+                            <a href="/edit-recipe/${recipe.rid}" class="edit-btn">Edit</a>
+                            <button class="delete-btn" data-id="${recipe.rid}">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            recipesHTML += '</div>';
+            
+            recipesContainer.innerHTML = recipesHTML;
+            
+            // Add event listeners for delete buttons
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', handleDeleteRecipe);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading recipes:', error);
+            document.getElementById('recipes-container').innerHTML = 
+                '<p>Error loading recipes. Please try again later.</p>';
+        });
+}
+
+// Function to handle recipe deletion
+function handleDeleteRecipe(event) {
+    const recipeId = event.target.getAttribute('data-id');
+    if (confirm('Are you sure you want to delete this recipe?')) {
+        fetch(`/recipes/${recipeId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to delete recipe');
+            return response.json();
+        })
+        .then(() => {
+            // Reload recipes after deletion
+            loadUserRecipes();
+        })
+        .catch(error => {
+            console.error('Error deleting recipe:', error);
+            alert('Failed to delete recipe. Please try again.');
+        });
+    }
+}

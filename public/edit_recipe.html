@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Recipe</title>
+    <link rel="stylesheet" href="/css/new_recipe.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Recipe</h1>
+        
+        <div id="message-container" class="message"></div>
+        
+        <form id="recipe-form" method="POST">
+            <div class="form-group">
+                <label for="name">Recipe Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" rows="3" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="type">Type:</label>
+                <select id="type" name="type" required>
+                    <option value="">Select a cuisine type</option>
+                    <option value="Italian">Italian</option>
+                    <option value="French">French</option>
+                    <option value="Mexican">Mexican</option>
+                    <option value="Indian">Indian</option>
+                    <option value="Chinese">Chinese</option>
+                    <option value="Japanese">Japanese</option>
+                    <option value="Thai">Thai</option>
+                    <option value="American">American</option>
+                    <option value="Mediterranean">Mediterranean</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="cookingtime">Cooking Time (minutes):</label>
+                <input type="number" id="cookingtime" name="cookingtime" min="1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="ingredients">Ingredients:</label>
+                <textarea id="ingredients" name="ingredients" rows="5" required placeholder="List ingredients with quantities, one per line"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="instructions">Instructions:</label>
+                <textarea id="instructions" name="instructions" rows="5" required placeholder="List steps, one per line"></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Update Recipe</button>
+                <a href="/dashboard" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+    
+    <script src="/js/edit_recipe.js"></script>
+</body>
+</html>

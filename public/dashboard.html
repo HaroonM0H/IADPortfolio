@@ -7,12 +7,15 @@
     <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
-    <h1>Welcome to Your Dashboard</h1>
     <div id="user-info" class="user-info">
-        <p>Loading user information...</p>
+        <h1>Welcome to Your Dashboard, <span id="username-display">...</span></h1>
     </div>
     
-    <h2>Your Recipes</h2>
+    <div class="dashboard-actions">
+        <h2>Your Recipes</h2>
+        <a href="/new-recipe" class="add-recipe-btn">Add New Recipe</a>
+    </div>
+    
     <div id="recipes-container">
         <p>Loading your recipes...</p>
     </div>

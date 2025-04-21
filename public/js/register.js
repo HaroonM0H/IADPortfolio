@@ -22,7 +22,7 @@ function validateForm() {
     return true;
 }
 
-// Display message if present in URL parameters
+// Display message if present in URL params
 window.onload = function() {
     const urlParams = new URLSearchParams(window.location.search);
     const message = urlParams.get('message');
