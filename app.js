@@ -2,7 +2,7 @@ import express from 'express'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import session from 'express-session'
-import {getUserById, createUser, getUsers, verifyUser} from './db.js'
+import {getUserById, createUser, getUsers, verifyUser, getRecipebyID, getRecipesByUserId} from './db.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -12,7 +12,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, 'public')))
 
-// Configure session middleware
+// Configure session middleware :P
 app.use(session({
     secret: 'your-secret-key', // Change this to a secure random string in production
     resave: false,
@@ -94,23 +94,59 @@ app.get('/dashboard-data', requireAuth, (req, res) => {
     res.json(req.session.user);
 });
 
-// Logout route
+// logout route
 app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/login');
+    // Store username for feedback message
+    const username = req.session.user ? req.session.user.username : null;
+    
+    // Destroy the session
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Logout error:', err);
+            return res.status(500).send('Error during logout process');
+        }
+        
+        // Clear the cookie on client side
+        res.clearCookie('connect.sid');
+        
+        // Redirect with a success message
+        res.redirect('/login?message=You have been successfully logged out&username=' + (username || ''));
+    });
 });
 
-// Route to handle registration form submission
+// Route to handle registration form :)
 app.post('/register', async (req, res) => {
     try {
         const {username, email, password} = req.body
+        
+        // Basic server-side validation
+        if (password.length < 8) {
+            return res.redirect('/register?message=Password must be at least 8 characters long&error=true');
+        }
+        
         console.log('Registration attempt:', { username, email })
+        
+        // Check if username already exists
+        const existingUsers = await getUsers();
+        const userExists = existingUsers.some(user => user.username === username);
+        if (userExists) {
+            return res.redirect('/register?message=Username already exists&error=true');
+        }
+        
+        // Check if email already exists
+        const emailExists = existingUsers.some(user => user.email === email);
+        if (emailExists) {
+            return res.redirect('/register?message=Email already in use&error=true');
+        }
+        
         const user = await createUser(username, email, password)
         console.log('New user registered:', user)
-        res.redirect('/login')
+        
+        // Redirect with success message
+        res.redirect('/login?message=Registration successful! Please log in.');
     } catch (error) {
         console.error('Registration error:', error)
-        res.status(500).send('Registration failed: ' + error.message)
+        res.redirect('/register?message=Registration failed: ' + error.message + '&error=true');
     }
 })
 
@@ -122,3 +158,15 @@ app.use((err,req,res,next) => {
 app.listen(8080, () => {
     console.log("server is running on port 8080")
 })
+
+// Route to get user's recipes
+app.get('/user-recipes', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        const recipes = await getRecipesByUserId(userId);
+        res.json(recipes);
+    } catch (error) {
+        console.error('Error fetching recipes:', error);
+        res.status(500).json({ error: 'Failed to fetch recipes' });
+    }
+});

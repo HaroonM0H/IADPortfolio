@@ -56,5 +56,10 @@ export async function getRecipebyID(id) {
     return rows[0]
 }
 
+export async function getRecipesByUserId(uid) {
+    const [rows] = await pool.query("SELECT * FROM recipes WHERE uid = ?", [uid])
+    return rows
+}
+
 const users = await getUsers()
 console.log(users)
