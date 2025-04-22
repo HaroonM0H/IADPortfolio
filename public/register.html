@@ -7,31 +7,36 @@
     <link rel="stylesheet" href="/css/auth.css">
 </head>
 <body>
-    <h1>Register</h1>
-    <div id="message-container" class="message"></div>
-    <form id="register-form" action="/register" method="POST" onsubmit="return validateForm()">
-        <div class="form-group">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1>Register</h1>
+            <div id="message-container" class="message"></div>
+            <form id="register-form" action="/register" method="POST" onsubmit="return validateForm()">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                    <p class="password-requirements">Password must be at least 8 characters long</p>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password:</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn">Register</button>
+                </div>
+            </form>
+            <p class="auth-link">Already have an account? <a href="/login">Login</a></p>
+            <p class="auth-link"><a href="/">Back to Home</a></p>
         </div>
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-            <p class="password-requirements">Password must be at least 8 characters long</p>
-        </div>
-        <div class="form-group">
-            <label for="confirm-password">Confirm Password:</label>
-            <input type="password" id="confirm-password" name="confirm-password" required>
-        </div>
-        <div>
-            <button type="submit">Register</button>
-        </div>
-    </form>
-    <p>Already have an account? <a href="/login">Login</a></p>
+    </div>
 
     <script src="/js/register.js"></script>
 </body>

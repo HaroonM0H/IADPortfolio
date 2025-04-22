@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const recipeForm = document.getElementById('recipe-form');
     const messageContainer = document.getElementById('message-container');
     
-    // Display message if present
     const urlParams = new URLSearchParams(window.location.search);
     const message = urlParams.get('message');
     const error = urlParams.get('error');
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Form submission handling
     recipeForm.addEventListener('submit', function(e) {
-        // Basic validation
         const name = document.getElementById('name').value.trim();
         const description = document.getElementById('description').value.trim();
         const type = document.getElementById('type').value;

@@ -5,6 +5,7 @@ import session from 'express-session'
 import {getUserById, createUser, getUsers, verifyUser,
      getRecipebyID, getRecipesByUserId, createRecipe, 
      updateRecipe, deleteRecipe} from './db.js'
+import { pool } from './db.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -24,6 +25,11 @@ app.use(session({
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }))
+
+//A route for the root path for the homepage
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Authentication middleware
 const requireAuth = (req, res, next) => {
@@ -152,15 +158,6 @@ app.post('/register', async (req, res) => {
     }
 })
 
-app.use((err,req,res,next) => {
-    console.error(err.stack)
-    res.status(500).send('Something Broke!')
-})
-
-app.listen(8080, () => {
-    console.log("server is running on port 8080")
-})
-
 // Route to get user's recipes
 app.get('/user-recipes', requireAuth, async (req, res) => {
     try {
@@ -205,7 +202,7 @@ app.delete('/recipes/:id', requireAuth, async (req, res) => {
         const recipeId = req.params.id;
         const userId = req.session.user.uid;
         
-        // check if the recipe belongs to the  :)
+        // check if the recipe belongs to the user 
         const recipe = await getRecipebyID(recipeId);
         
         if (!recipe) {
@@ -226,7 +223,7 @@ app.delete('/recipes/:id', requireAuth, async (req, res) => {
     }
 });
 
-// Routethe edit recipe page :O
+// Route to edit recipe page :O
 app.get('/edit-recipe/:id', requireAuth, async (req, res) => {
     try {
         const recipeId = req.params.id;
@@ -317,3 +314,51 @@ app.post('/recipes/:id', requireAuth, async (req, res) => {
         res.redirect(`/edit-recipe/${req.params.id}?message=Failed to update recipe: ${error.message}&error=true`);
     }
 });
+
+// Route for the homepage
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Route to get all recipes for the homepage
+app.get('/all-recipes', async (req, res) => {
+    try {
+        const [rows] = await pool.query("SELECT * FROM recipes");
+        res.json(rows);
+    } catch (error) {
+        console.error('Error fetching all recipes:', error);
+        res.status(500).json({ error: 'Failed to fetch recipes' });
+    }
+});
+
+// Route to search recipes by name or type
+app.get('/search-recipes', async (req, res) => {
+    try {
+        const searchTerm = req.query.term;
+        
+        if (!searchTerm) {
+            return res.status(400).json({ error: 'Search term is required' });
+        }
+        
+        const [rows] = await pool.query(
+            "SELECT * FROM recipes WHERE name LIKE ? OR type LIKE ?", 
+            [`%${searchTerm}%`, `%${searchTerm}%`]
+        );
+        
+        res.json(rows);
+    } catch (error) {
+        console.error('Error searching recipes:', error);
+        res.status(500).json({ error: 'Failed to search recipes' });
+    }
+});
+
+// Error handling middleware (move this outside the route handler)
+app.use((err, req, res, next) => {
+    console.error(err.stack)
+    res.status(500).send('Something Broke!')
+})
+
+// Start the server (move this outside the route handler)
+app.listen(8080, () => {
+    console.log("server is running on port 8080")
+})
