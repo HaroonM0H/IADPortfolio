@@ -10,5 +10,3 @@ The application is built with a focus on simplicity and ease of use, providing f
 The project is structured with HTML, CSS, and JavaScript, providing a robust and interactive user experience.
  It also includes server-side components for handling data storage and retrieval. As well as
 using NodeJS and Express to handle file routing.
-
-Overall Grade: 
